@@ -1,61 +1,75 @@
+# ---------------------------------------------------------------------------
+# Enhanced Deep Residual Networks for Single Image Super-Resolution
+# Official GitHub: https://github.com/sanghyun-son/EDSR-PyTorch
+#
+# Modified by Tianle Liu (tianle.l@outlook.com)
+# ---------------------------------------------------------------------------
 import torch
-from torch import nn as nn
-
-from basicsr.archs.arch_util import ResidualBlockNoBN, Upsample, make_layer
+import torch.nn as nn
 from basicsr.utils.registry import ARCH_REGISTRY
+
+from basicsr.archs.utils import Conv2d3x3, Upsampler
+
+
+class ResBlock(nn.Module):
+    r"""Res Block.
+
+    Args:
+        planes: Number of input channels
+        res_scale:
+        act_layer:
+
+    """
+
+    def __init__(self, planes: int, res_scale: float = 1.0, act_layer: nn.Module = nn.ReLU) -> None:
+        super(ResBlock, self).__init__()
+
+        self.res_scale = res_scale
+
+        self.body = nn.Sequential(Conv2d3x3(planes, planes, bias=True),
+                                  act_layer(),
+                                  Conv2d3x3(planes, planes, bias=True))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x + self.body(x) * self.res_scale
 
 
 @ARCH_REGISTRY.register()
 class EDSR(nn.Module):
-    """EDSR network structure.
-
-    Paper: Enhanced Deep Residual Networks for Single Image Super-Resolution.
-    Ref git repo: https://github.com/thstkdgus35/EDSR-PyTorch
-
-    Args:
-        num_in_ch (int): Channel number of inputs.
-        num_out_ch (int): Channel number of outputs.
-        num_feat (int): Channel number of intermediate features.
-            Default: 64.
-        num_block (int): Block number in the trunk network. Default: 16.
-        upscale (int): Upsampling factor. Support 2^n and 3.
-            Default: 4.
-        res_scale (float): Used to scale the residual in residual block.
-            Default: 1.
-        img_range (float): Image range. Default: 255.
-        rgb_mean (tuple[float]): Image mean in RGB orders.
-            Default: (0.4488, 0.4371, 0.4040), calculated from DIV2K dataset.
+    r"""Enhanced Deep Residual Network.
     """
 
-    def __init__(self,
-                 num_in_ch,
-                 num_out_ch,
-                 num_feat=64,
-                 num_block=16,
-                 upscale=4,
-                 res_scale=1,
-                 img_range=255.,
-                 rgb_mean=(0.4488, 0.4371, 0.4040)):
+    def __init__(self, upscale: int, num_in_ch: int, num_out_ch: int, task: str,
+                 planes: int = 256, n_blocks: int = 32, act_layer: nn.Module = nn.ReLU):
         super(EDSR, self).__init__()
 
-        self.img_range = img_range
-        self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
+        modules_head = [Conv2d3x3(num_in_ch, planes)]
+        self.head = nn.Sequential(*modules_head)
 
-        self.conv_first = nn.Conv2d(num_in_ch, num_feat, 3, 1, 1)
-        self.body = make_layer(ResidualBlockNoBN, num_block, num_feat=num_feat, res_scale=res_scale, pytorch_init=True)
-        self.conv_after_body = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
-        self.upsample = Upsample(upscale, num_feat)
-        self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
+        modules_body = [ResBlock(planes, act_layer=act_layer) for _ in range(n_blocks)]
+        self.body = nn.Sequential(*modules_body)
 
-    def forward(self, x):
-        self.mean = self.mean.type_as(x)
+        self.tail = nn.Sequential(Upsampler(upscale=upscale, in_channels=planes,
+                                            out_channels=planes, upsample_mode=task),
+                                  Conv2d3x3(planes, 3))
 
-        x = (x - self.mean) * self.img_range
-        x = self.conv_first(x)
-        res = self.conv_after_body(self.body(x))
-        res += x
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # head
+        head_x = self.head(x)
 
-        x = self.conv_last(self.upsample(res))
-        x = x / self.img_range + self.mean
+        # body
+        body_x = self.body(head_x)
+        body_x = body_x + head_x
 
-        return x
+        # tail
+        tail_x = self.tail(body_x)
+
+        return tail_x
+
+
+if __name__ == '__main__':
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    # net = EDSR(upscale=4, planes=64, n_blocks=16)
+    # print(count_parameters(net))
