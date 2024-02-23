@@ -1,11 +1,13 @@
 import logging
-import torch
 from os import path as osp
 
+import torch
 from basicsr.data import build_dataloader, build_dataset
 from basicsr.models import build_model
-from basicsr.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
-from basicsr.utils.options import dict2str, parse_options
+from basicsr.utils import get_env_info, get_root_logger, get_time_str
+from basicsr.utils.options import dict2str
+
+from utils import parse_options, make_exp_dirs
 
 
 def test_pipeline(root_path):
@@ -24,7 +26,10 @@ def test_pipeline(root_path):
 
     # create test dataset and dataloader
     test_loaders = []
-    for _, dataset_opt in sorted(opt['datasets'].items()):
+    for _, dataset_opt in sorted(opt['test_datasets'].items()):
+        dataset_opt['phase'] = 'val'
+        dataset_opt['bit'] = opt['bit']
+        dataset_opt['scale'] = opt['scale']
         test_set = build_dataset(dataset_opt)
         test_loader = build_dataloader(
             test_set, dataset_opt, num_gpu=opt['num_gpu'], dist=opt['dist'], sampler=None, seed=opt['manual_seed'])
@@ -41,5 +46,5 @@ def test_pipeline(root_path):
 
 
 if __name__ == '__main__':
-    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    root_path = osp.abspath(osp.join(__file__, osp.pardir))
     test_pipeline(root_path)

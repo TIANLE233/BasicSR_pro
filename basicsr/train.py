@@ -15,9 +15,6 @@ from basicsr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, 
 from basicsr.utils.options import copy_opt_file, dict2str
 from torch.utils.data import ConcatDataset
 
-import archs  # noqa
-import data  # noqa
-import models  # noqa
 from utils import parse_options, make_exp_dirs, mkdir_and_rename
 
 
