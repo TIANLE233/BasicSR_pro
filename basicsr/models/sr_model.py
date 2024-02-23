@@ -18,13 +18,13 @@ from basicsr.utils.registry import MODEL_REGISTRY
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from tqdm import tqdm
 
-import archs.utils
-from .base_model import _BaseModel
+import basicsr.archs.utils
+from .base_model import BaseModel
 from .torch_optimizer import Lamb
 
 
 @MODEL_REGISTRY.register()
-class ISPModel(_BaseModel):
+class ISPModel(BaseModel):
     def __init__(self, opt) -> None:
         super(ISPModel, self).__init__(opt)
 
@@ -34,7 +34,7 @@ class ISPModel(_BaseModel):
         # define network
         self.net_g = build_network(opt['network_g'])
         self.net_g = self.model_to_device(self.net_g)
-        # self.print_network(self.net_g)
+        self.print_network(self.net_g)
 
         # load pretrained models
         load_path = self.opt['path'].get('pretrain_network_g', None)

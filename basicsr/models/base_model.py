@@ -4,7 +4,7 @@ from basicsr.utils import get_root_logger
 from basicsr.utils.dist_util import master_only
 
 
-class _BaseModel:
+class BaseModel:
     """Base model."""
 
     def __init__(self, opt):

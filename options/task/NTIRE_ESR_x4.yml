@@ -1,0 +1,393 @@
+# --------------------------------------------------------------------------------
+# Basic experiment YML file of NTIRE 2023 ESR challenge.
+#
+# Implemented/Modified by Fried Rice Lab (https://github.com/Fried-Rice-Lab)
+# --------------------------------------------------------------------------------
+
+
+# general settings #####################################################################################################
+task_name: NTIRE_ESR
+scale: 4
+num_in_ch: 3
+num_out_ch: 3
+task: lsr
+hook_layer_type: Conv2d
+
+
+# dataset and data loader settings #####################################################################################
+datasets:
+  train:
+    name: DIV2K-train
+    type: IRDataset
+    dataroot_gt: datasets/sr_data/DIV2K/train/GT/x.lmdb
+    dataroot_lq: datasets/sr_data/DIV2K/train/RAW/x4.lmdb
+    meta_info_file: None
+    io_backend:
+      type: lmdb
+
+    extra_datasets:
+      extra_17:
+        name: Flickr2K-00
+        dataroot_gt: datasets/sr_data/Flickr2K-00/GT/x.lmdb
+        dataroot_lq: datasets/sr_data/Flickr2K-00/RAW/x4.lmdb
+        io_backend:
+          type: lmdb
+
+      extra_18:
+        name: Flickr2K-01
+        dataroot_gt: datasets/sr_data/Flickr2K-01/GT/x.lmdb
+        dataroot_lq: datasets/sr_data/Flickr2K-01/RAW/x4.lmdb
+        io_backend:
+          type: lmdb
+
+      extra_19:
+        name: Flickr2K-02
+        dataroot_gt: datasets/sr_data/Flickr2K-02/GT/x.lmdb
+        dataroot_lq: datasets/sr_data/Flickr2K-02/RAW/x4.lmdb
+        io_backend:
+          type: lmdb
+
+      extra_20:
+        name: LSDIR
+        dataroot_gt: datasets/sr_data/LSDIR/GT/x
+        dataroot_lq: datasets/sr_data/LSDIR/RAW/x4
+        filename_tmpl: '{}x4'
+        io_backend:
+          type: disk
+
+    #      extra_0:
+    #        name: LSDIR-00
+    #        dataroot_gt: datasets/sr_data/LSDIR-00/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-00/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_1:
+    #        name: LSDIR-01
+    #        dataroot_gt: datasets/sr_data/LSDIR-01/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-01/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_2:
+    #        name: LSDIR-02
+    #        dataroot_gt: datasets/sr_data/LSDIR-02/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-02/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_3:
+    #        name: LSDIR-03
+    #        dataroot_gt: datasets/sr_data/LSDIR-03/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-03/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_4:
+    #        name: LSDIR-04
+    #        dataroot_gt: datasets/sr_data/LSDIR-04/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-04/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_5:
+    #        name: LSDIR-05
+    #        dataroot_gt: datasets/sr_data/LSDIR-05/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-05/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_6:
+    #        name: LSDIR-06
+    #        dataroot_gt: datasets/sr_data/LSDIR-06/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-06/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_7:
+    #        name: LSDIR-07
+    #        dataroot_gt: datasets/sr_data/LSDIR-07/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-07/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_8:
+    #        name: LSDIR-08
+    #        dataroot_gt: datasets/sr_data/LSDIR-08/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-08/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_9:
+    #        name: LSDIR-09
+    #        dataroot_gt: datasets/sr_data/LSDIR-09/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-09/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_10:
+    #        name: LSDIR-10
+    #        dataroot_gt: datasets/sr_data/LSDIR-10/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-10/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_11:
+    #        name: LSDIR-11
+    #        dataroot_gt: datasets/sr_data/LSDIR-11/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-11/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_12:
+    #        name: LSDIR-12
+    #        dataroot_gt: datasets/sr_data/LSDIR-12/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-12/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_13:
+    #        name: LSDIR-13
+    #        dataroot_gt: datasets/sr_data/LSDIR-13/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-13/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_14:
+    #        name: LSDIR-14
+    #        dataroot_gt: datasets/sr_data/LSDIR-14/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-14/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_15:
+    #        name: LSDIR-15
+    #        dataroot_gt: datasets/sr_data/LSDIR-15/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-15/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+    #
+    #      extra_16:
+    #        name: LSDIR-16
+    #        dataroot_gt: datasets/sr_data/LSDIR-16/GT/x.lmdb
+    #        dataroot_lq: datasets/sr_data/LSDIR-16/RAW/x4.lmdb
+    #        meta_info_file: None
+    #        io_backend:
+    #          type: lmdb
+
+    # data enhancement
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 4
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+
+# val datasets #########################################################################################################
+  val_0:
+    name: DF2K_val_10
+    type: IRDataset
+    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+    meta_info_file: datasets/meta_info/DF2K_val_10.txt
+    io_backend:
+      type: lmdb
+
+  val_1:
+    name: DF2K_val
+    type: IRDataset
+    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+    meta_info_file: datasets/meta_info/DF2K_val.txt
+    io_backend:
+      type: lmdb
+
+# test datasets ########################################################################################################
+test_datasets:
+  test_0: # demo dataset
+    name: ZZR5
+    type: IRDataset
+    dataroot_gt: datasets/demo_data/ZZR5/GT/x4
+    dataroot_lq: datasets/demo_data/ZZR5/RAW/x4
+    io_backend:
+      type: disk
+
+#  test_1:
+#    name: Set5
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Set5/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Set5/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  test_2:
+#    name: Set14
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Set14/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Set14/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  test_3:
+#    name: BSD100
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/BSD100/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/BSD100/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  test_4:
+#    name: Urban100
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Urban100/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Urban100/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  test_5:
+#    name: Manga109
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Manga109/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Manga109/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  test_6:
+#    name: DF2K_val
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+#    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+
+# analyse datasets #####################################################################################################
+analyse_datasets:
+  analyse_0: # demo dataset
+    name: ZZR5
+    type: IRDataset
+    dataroot_gt: datasets/demo_data/ZZR5/GT/x4
+    dataroot_lq: datasets/demo_data/ZZR5/RAW/x4
+    io_backend:
+      type: disk
+
+#  analyse_1:
+#    name: Set5
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Set5/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Set5/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  analyse_2:
+#    name: Set14
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Set14/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Set14/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  analyse_3:
+#    name: BSD100
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/BSD100/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/BSD100/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  analyse_4:
+#    name: Urban100
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Urban100/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Urban100/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+#  analyse_5:
+#    name: Manga109
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/Manga109/GT/x4.lmdb
+#    dataroot_lq: datasets/sr_data/Manga109/RAW/x4.lmdb
+#    io_backend:
+#      type: lmdb
+
+
+# infer datasets #######################################################################################################
+infer_datasets:
+  infer_0: # demo dataset
+    name: Set5_GT
+    type: IRDataset
+    dataroot_gt: datasets/demo_data/ZZR5/GT/x4
+    io_backend:
+      type: disk
+
+
+# cka datasets #########################################################################################################
+cka_datasets:
+  cka_0:
+    name: DF2K_val
+    type: IRDataset
+    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+    # meta_info_file: datasets/meta_info/DF2K_val_10.txt
+    meta_info_file: datasets/meta_info/DF2K_val.txt # if you prefer to use the complete DIV2K validation set
+    io_backend:
+      type: lmdb
+    input_size: 288
+
+
+# mad datasets #########################################################################################################
+mad_datasets:
+  mad_0:
+    name: DF2K_val
+    type: IRDataset
+    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+    # meta_info_file: datasets/meta_info/DF2K_val_10.txt
+    meta_info_file: datasets/meta_info/DF2K_val.txt # if you prefer to use the complete DIV2K validation set
+    io_backend:
+      type: lmdb
+    input_size: 288
+
+
+# interpret imgs #######################################################################################################
+interpret_imgs:
+  img_0:
+    img_path: datasets/demo_data/Urban7/7.png
+    w: 110
+    h: 150
+
+
+# logging settings #####################################################################################################
+logger:
+  print_freq: 1000
+  save_checkpoint_freq: 1000
+  use_tb_logger: false
+  wandb:
+    project: ~
+    resume_id: ~
+
+
+# dist training settings ###############################################################################################
+dist_params:
+  backend: nccl
+  port: 4000
