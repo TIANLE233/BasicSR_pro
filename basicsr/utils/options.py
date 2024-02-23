@@ -98,7 +98,8 @@ def _postprocess_yml_value(value):
 
 def parse_options(root_path, is_train=True):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-opt', type=str, required=True, help='Path to option YAML file.')
+    parser.add_argument('-expe_opt', type=str, required=True, help='Path to experiment YAML file.')
+    parser.add_argument('-task_opt', type=str, required=True, help='Path to task YAML file.')
     parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none', help='job launcher')
     parser.add_argument('--auto_resume', action='store_true')
     parser.add_argument('--debug', action='store_true')
@@ -108,7 +109,18 @@ def parse_options(root_path, is_train=True):
     args = parser.parse_args()
 
     # parse yml to dict
-    opt = yaml_load(args.opt)
+    with open(args.expe_opt, mode='r') as f:
+        opt = yaml.load(f, Loader=ordered_yaml()[0])
+    with open(args.task_opt, mode='r') as f:
+        task_opt = yaml.load(f, Loader=ordered_yaml()[0])
+    for k, v in task_opt.items():
+        opt[k] = v
+
+    opt['name'] = f"{opt['name']}_{opt['task_name']}"
+    opt['network_g']['upscale'] = opt['scale']
+    opt['network_g']['num_in_ch'] = opt['num_in_ch']
+    opt['network_g']['num_out_ch'] = opt['num_out_ch']
+    opt['network_g']['task'] = opt['task']
 
     # distributed settings
     if args.launcher == 'none':
@@ -171,11 +183,7 @@ def parse_options(root_path, is_train=True):
             opt['path'][key] = osp.expanduser(val)
 
     if is_train:
-        experiments_root = opt['path'].get('experiments_root')
-        if experiments_root is None:
-            experiments_root = osp.join(root_path, 'experiments')
-        experiments_root = osp.join(experiments_root, opt['name'])
-
+        experiments_root = osp.join(root_path, 'experiments', opt['name'])
         opt['path']['experiments_root'] = experiments_root
         opt['path']['models'] = osp.join(experiments_root, 'models')
         opt['path']['training_states'] = osp.join(experiments_root, 'training_states')
@@ -189,11 +197,7 @@ def parse_options(root_path, is_train=True):
             opt['logger']['print_freq'] = 1
             opt['logger']['save_checkpoint_freq'] = 8
     else:  # test
-        results_root = opt['path'].get('results_root')
-        if results_root is None:
-            results_root = osp.join(root_path, 'results')
-        results_root = osp.join(results_root, opt['name'])
-
+        results_root = osp.join(root_path, 'results', opt['name'])
         opt['path']['results_root'] = results_root
         opt['path']['log'] = results_root
         opt['path']['visualization'] = osp.join(results_root, 'visualization')
