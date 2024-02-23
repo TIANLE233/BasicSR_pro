@@ -1,16 +1,24 @@
 import datetime
 import logging
 import math
+import os.path as osp
 import time
-import torch
 from os import path as osp
+
+import torch
 from basicsr.data import build_dataloader, build_dataset
 from basicsr.data.data_sampler import EnlargedSampler
 from basicsr.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from basicsr.models import build_model
 from basicsr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, get_root_logger, get_time_str,
-                           init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
-from basicsr.utils.options import copy_opt_file, dict2str, parse_options
+                           init_tb_logger, init_wandb_logger, scandir)
+from basicsr.utils.options import copy_opt_file, dict2str
+from torch.utils.data import ConcatDataset
+
+import archs  # noqa
+import data  # noqa
+import models  # noqa
+from utils import parse_options, make_exp_dirs, mkdir_and_rename
 
 
 def init_tb_loggers(opt):
@@ -29,9 +37,30 @@ def create_train_val_dataloader(opt, logger):
     # create train and val dataloaders
     train_loader, val_loaders = None, []
     for phase, dataset_opt in opt['datasets'].items():
+        dataset_opt['bit'] = opt['bit']
+        dataset_opt['scale'] = opt['scale']
+        dataset_opt['gt_size'] = opt['train']['gt_size']
+        dataset_opt['batch_size_per_gpu'] = opt['train']['batch_size_per_gpu']
         if phase == 'train':
             dataset_enlarge_ratio = dataset_opt.get('dataset_enlarge_ratio', 1)
-            train_set = build_dataset(dataset_opt)
+            train_sets = [build_dataset(dataset_opt)]
+            datasets_used = f"\n\t\t{dataset_opt['name']}: {len(train_sets[0])} images"
+
+            extra_datasets = dataset_opt.get('extra_datasets', None)
+            if extra_datasets is not None:
+                for _, extra_dataset in extra_datasets.items():
+                    _dataset_opt = dataset_opt
+                    _dataset_opt['name'] = extra_dataset['name']
+                    _dataset_opt['dataroot_gt'] = extra_dataset['dataroot_gt']
+                    _dataset_opt['dataroot_lq'] = extra_dataset['dataroot_lq']
+                    _dataset_opt['meta_info_file'] = extra_dataset.get('meta_info_file', 'None')
+                    _dataset_opt['filename_tmpl'] = extra_dataset.get('filename_tmpl', '{}')
+                    _dataset_opt['io_backend'] = extra_dataset['io_backend']
+                    _extra_dataset = build_dataset(_dataset_opt)
+                    train_sets.append(_extra_dataset)
+                    datasets_used = f"{datasets_used}\n\t\t{_dataset_opt['name']}: {len(_extra_dataset)} images"
+
+            train_set = ConcatDataset(train_sets)
             train_sampler = EnlargedSampler(train_set, opt['world_size'], opt['rank'], dataset_enlarge_ratio)
             train_loader = build_dataloader(
                 train_set,
@@ -44,9 +73,10 @@ def create_train_val_dataloader(opt, logger):
             num_iter_per_epoch = math.ceil(
                 len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size_per_gpu'] * opt['world_size']))
             total_iters = int(opt['train']['total_iter'])
-            total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
+            total_epochs = math.ceil(total_iters / num_iter_per_epoch)
             logger.info('Training statistics:'
-                        f'\n\tNumber of train images: {len(train_set)}'
+                        f'\n\tTraining set(s) used: {datasets_used}'
+                        f'\n\tNumber of total train images: {len(train_set)}'
                         f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
                         f'\n\tBatch size per gpu: {dataset_opt["batch_size_per_gpu"]}'
                         f'\n\tWorld size (gpu number): {opt["world_size"]}'
@@ -104,7 +134,8 @@ def train_pipeline(root_path):
             mkdir_and_rename(osp.join(opt['root_path'], 'tb_logger', opt['name']))
 
     # copy the yml file to the experiment root
-    copy_opt_file(args.opt, opt['path']['experiments_root'])
+    copy_opt_file(args.expe_opt, opt['path']['experiments_root'])
+    copy_opt_file(args.task_opt, opt['path']['experiments_root'])
 
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
@@ -186,8 +217,6 @@ def train_pipeline(root_path):
 
             # validation
             if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
-                if len(val_loaders) > 1:
-                    logger.warning('Multiple validation datasets are *only* supported by SRModel.')
                 for val_loader in val_loaders:
                     model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
 
@@ -210,5 +239,5 @@ def train_pipeline(root_path):
 
 
 if __name__ == '__main__':
-    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    root_path = osp.abspath(osp.join(__file__, osp.pardir))
     train_pipeline(root_path)

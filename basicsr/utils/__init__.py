@@ -5,7 +5,9 @@ from .img_process_util import USMSharp, usm_sharp
 from .img_util import crop_border, imfrombytes, img2tensor, imwrite, tensor2img
 from .logger import AvgTimer, MessageLogger, get_env_info, get_root_logger, init_tb_logger, init_wandb_logger
 from .misc import check_resume, get_time_str, make_exp_dirs, mkdir_and_rename, scandir, set_random_seed, sizeof_fmt
-from .options import yaml_load
+from .options import yaml_load, parse_options
+from .analyse_tool import get_model_flops, get_model_activation
+from .interpret_tool import get_model_interpretation
 
 __all__ = [
     #  color_util.py
@@ -43,6 +45,14 @@ __all__ = [
     'USMSharp',
     'usm_sharp',
     # options
-    'yaml_load'
-
+    'yaml_load',
+    'parse_options',
+    # misc
+    'make_exp_dirs',
+    'mkdir_and_rename',
+    # analyse tool
+    'get_model_flops',
+    'get_model_activation',
+    # interpret tool
+    'get_model_interpretation'
 ]
