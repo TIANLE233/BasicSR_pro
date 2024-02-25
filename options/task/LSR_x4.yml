@@ -17,22 +17,29 @@ hook_layer_type: SABase4D
 # dataset and data loader settings #####################################################################################
 datasets:
   train:
-    name: DIV2K_train
-    type: IRDataset
-    dataroot_gt: datasets/sr_data/DF2K/train/GT/x.lmdb
-    dataroot_lq: datasets/sr_data/DF2K/train/RAW/x4.lmdb
-    meta_info_file: datasets/meta_info/DIV2K_train.txt
+#    name: DIV2K_train
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/DF2K/train/GT/x.lmdb
+#    dataroot_lq: datasets/sr_data/DF2K/train/RAW/x4.lmdb
+#    meta_info_file: datasets/meta_info/DIV2K_train.txt
+#    io_backend:
+#      type: lmdb
+#
+#    extra_datasets:
+#      extra_0:
+#        name: Flickr2K_train
+#        dataroot_gt: datasets/sr_data/DF2K/train/GT/x.lmdb
+#        dataroot_lq: datasets/sr_data/DF2K/train/RAW/x4.lmdb
+#        meta_info_file: datasets/meta_info/Flickr2K_train.txt
+#        io_backend:
+#          type: lmdb
+    name: Set5
+    type: SRDataset
+    dataroot_gt: datasets/sr_test/Set5/HR/x4
+    dataroot_lq: datasets/sr_test/Set5/LR/x4
+    filename_tmpl: '{}'
     io_backend:
-      type: lmdb
-
-    extra_datasets:
-      extra_0:
-        name: Flickr2K_train
-        dataroot_gt: datasets/sr_data/DF2K/train/GT/x.lmdb
-        dataroot_lq: datasets/sr_data/DF2K/train/RAW/x4.lmdb
-        meta_info_file: datasets/meta_info/Flickr2K_train.txt
-        io_backend:
-          type: lmdb
+      type: disk
 
     # data enhancement
     use_hflip: true
@@ -47,14 +54,20 @@ datasets:
 
 # val datasets #########################################################################################################
   val_0:
-    name: DF2K_val_10
-    type: IRDataset
-    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
-    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
-    meta_info_file: datasets/meta_info/DF2K_val_10.txt
-    # meta_info_file: datasets/meta_info/DF2K_val.txt # if you prefer to use the complete DIV2K validation set
+#    name: DF2K_val_10
+#    type: IRDataset
+#    dataroot_gt: datasets/sr_data/DF2K/val/GT/x.lmdb
+#    dataroot_lq: datasets/sr_data/DF2K/val/RAW/x4.lmdb
+#    meta_info_file: datasets/meta_info/DF2K_val_10.txt
+#    # meta_info_file: datasets/meta_info/DF2K_val.txt # if you prefer to use the complete DIV2K validation set
+#    io_backend:
+#      type: lmdb
+    name: Set5
+    type: SRDataset
+    dataroot_gt: datasets/sr_test/Set5/HR/x4
+    dataroot_lq: datasets/sr_test/Set5/LR/x4
     io_backend:
-      type: lmdb
+      type: disk
 
 
 # test datasets ########################################################################################################

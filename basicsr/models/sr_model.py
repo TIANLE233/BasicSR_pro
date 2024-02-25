@@ -24,9 +24,9 @@ from .torch_optimizer import Lamb
 
 
 @MODEL_REGISTRY.register()
-class ISPModel(BaseModel):
+class SRModel(BaseModel):
     def __init__(self, opt) -> None:
-        super(ISPModel, self).__init__(opt)
+        super(SRModel, self).__init__(opt)
 
         self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
         self.bit = self.opt['bit']
