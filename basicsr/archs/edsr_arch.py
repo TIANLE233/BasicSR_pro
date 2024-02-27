@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from basicsr.utils.registry import ARCH_REGISTRY
 
-from basicsr.archs.utils import Conv2d3x3, Upsampler
+from  basicsr.archs.utils import Conv2d3x3, Upsampler
 
 
 class ResBlock(nn.Module):
@@ -35,13 +35,13 @@ class ResBlock(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class EDSR(nn.Module):
+class _EDSR(nn.Module):
     r"""Enhanced Deep Residual Network.
     """
 
     def __init__(self, upscale: int, num_in_ch: int, num_out_ch: int, task: str,
                  planes: int = 256, n_blocks: int = 32, act_layer: nn.Module = nn.ReLU):
-        super(EDSR, self).__init__()
+        super(_EDSR, self).__init__()
 
         modules_head = [Conv2d3x3(num_in_ch, planes)]
         self.head = nn.Sequential(*modules_head)
@@ -51,7 +51,7 @@ class EDSR(nn.Module):
 
         self.tail = nn.Sequential(Upsampler(upscale=upscale, in_channels=planes,
                                             out_channels=planes, upsample_mode=task),
-                                  Conv2d3x3(planes, 3))
+                                  Conv2d3x3(planes, num_out_ch))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # head

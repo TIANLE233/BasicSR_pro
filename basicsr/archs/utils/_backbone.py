@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as f
 
-from archs.utils._conv import Conv2d1x1, Conv2d3x3
+from basicsr.archs.utils._conv import Conv2d1x1, Conv2d3x3
 
 __all__ = ['DistBackbone', 'TransformerGroup', 'UBackbone', 'Upsampler']
 
