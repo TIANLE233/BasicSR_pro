@@ -106,7 +106,7 @@ class UpsampleConvLayer(torch.nn.Module):
         return out
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 class PyNET(nn.Module):
     def __init__(self, upscale: int, num_in_ch: int, num_out_ch: int, task: str, level, instance_norm=True, instance_norm_level_1=False):
         super(PyNET, self).__init__()
