@@ -4,9 +4,11 @@ import torch.nn.functional as F
 
 
 class ConvLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride, relu=True, instance_norm=False):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, relu=True,
+                 instance_norm=False, padding=True):
 
         super(ConvLayer, self).__init__()
+        self.padding = padding
         reflection_padding = kernel_size // 2
 
         self.reflection_pad = nn.ReflectionPad2d(reflection_padding)
@@ -23,8 +25,10 @@ class ConvLayer(nn.Module):
             self.relu = nn.PReLU()
 
     def forward(self, x):
-
-        out = self.reflection_pad(x)
+        if self.padding:
+            out = self.reflection_pad(x)
+        else:
+            out = x
         out = self.conv2d(out)
 
         if self.instance_norm:
@@ -154,7 +158,7 @@ class ConvGroups(nn.Module):
 
 
 class UpConvLayer(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, upsample=2, stride=1, relu=True):
+    def __init__(self, in_channels, out_channels, kernel_size, upsample=2, relu=True):
 
         super(UpConvLayer, self).__init__()
         self.upsample = nn.Upsample(scale_factor=upsample, mode='bilinear', align_corners=True)
@@ -162,7 +166,7 @@ class UpConvLayer(torch.nn.Module):
         reflection_padding = kernel_size // 2
         self.reflection_pad = torch.nn.ReflectionPad2d(reflection_padding)
 
-        self.conv2d = torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+        self.conv2d = torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1)
 
         if relu:
             self.relu = nn.PReLU()
@@ -185,11 +189,9 @@ class PyNETv2(nn.Module):
         super(PyNETv2, self).__init__()
         k = upscale
         self.level = level
-        x = input
-        # ConvLayer(in_channels, planes, 1, 1, relu=False, instance_norm=False)
         self.conv_l1_d1 = ConvLayer(num_in_ch, 32, 3, 1, relu=True, instance_norm=False)
-        self.conv_l2_d1 = ConvLayer(32, 64, 2, 2, relu=True, instance_norm=False)
-        self.conv_l3_d1 = ConvLayer(64, 128, 2, 2, relu=True, instance_norm=False)
+        self.conv_l2_d1 = ConvLayer(32, 64, 2, 2, relu=True, instance_norm=False, padding=False)
+        self.conv_l3_d1 = ConvLayer(64, 128, 2, 2, relu=True, instance_norm=False, padding=False)
         self.conv_l3_d6 = ConvGroups(128, 128, instance_norm=True, groups=4, n=2)
         self.conv_l3_d8 = SAMBlock(128, 128, instance_norm=False)
         self.conv_l3_d9 = CAMBlock(128, 128, instance_norm=False)
@@ -198,7 +200,7 @@ class PyNETv2(nn.Module):
                                      instance_norm=False)  # 32 -> 128  # 128ch -> 48ch
         self.suffle1 = nn.PixelShuffle(k)
 
-        self.conv_t2a = UpConvLayer(128, 64, 2, 2)
+        self.conv_t2a = UpConvLayer(128, 64, 3, 2)
         self.conv_l2_d2 = ConvLayer(64, 64, 3, 1, relu=True, instance_norm=False)
         self.conv_l2_d12 = Conv_1x1(64, 64, instance_norm=False)
         self.conv_l2_d13 = ConvGroups(64, 64, instance_norm=True, groups=2, n=3)
@@ -207,11 +209,8 @@ class PyNETv2(nn.Module):
         self.conv_l2_out = ConvLayer(64, 3 * k * k, 1, 1, relu=False, instance_norm=False)
         self.suffle2 = nn.PixelShuffle(k)
 
-        self.conv_t1a = UpConvLayer(64, 32, 2, 2)
+        self.conv_t1a = UpConvLayer(64, 32, 3, 2)
         self.conv_l1_d2 = ConvLayer(32, 32, 3, 1, relu=True, instance_norm=False)
-
-        # self.conv_l1_d3 = conv_l1_d2 + conv_t1a
-
         self.conv_l1_d12 = Conv_1x1(32, 32, instance_norm=False)
         self.conv_l1_d13 = ConvGroups(32, 32, instance_norm=True, groups=4)
         self.conv_l1_d14 = ConvGroups(32, 32, instance_norm=True, groups=2)
@@ -220,7 +219,7 @@ class PyNETv2(nn.Module):
         self.conv_l1_out = ConvLayer(32, 4 * k * k, 1, 1, relu=True, instance_norm=False)
         self.suffle3 = nn.PixelShuffle(k)
 
-        self.conv_l0_out = ConvLayer(32, 3, 3, 1, relu=False, instance_norm=False)
+        self.conv_l0_out = ConvLayer(4, 3, 3, 1, relu=False, instance_norm=False)
 
     def level_3(self, conv_l3_d9):
         conv_l3_out = self.conv_l3_out(conv_l3_d9)
@@ -237,7 +236,7 @@ class PyNETv2(nn.Module):
         return output_l2
 
     def level_1(self, conv_l1_d14):
-        conv_l1_out = self.conv_l2_out(conv_l1_d14)
+        conv_l1_out = self.conv_l1_out(conv_l1_d14)
         conv_l1_out = self.suffle3(conv_l1_out)
         conv_l0_out = self.conv_l0_out(conv_l1_out)
         output_l1 = torch.tanh(conv_l0_out) * 0.58 + 0.5
@@ -246,6 +245,7 @@ class PyNETv2(nn.Module):
 
     def forward(self, x):
         conv_l1_d1 = self.conv_l1_d1(x)
+
         conv_l2_d1 = self.conv_l2_d1(conv_l1_d1)
         conv_l3_d1 = self.conv_l3_d1(conv_l2_d1)
         conv_l3_d6 = self.conv_l3_d6(conv_l3_d1)
