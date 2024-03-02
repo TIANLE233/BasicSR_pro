@@ -24,8 +24,9 @@ https://github.com/sovrasov/flops-counter.pytorch.git
 # --------------------------------------------
 '''
 
+
 def get_model_flops(model, input_res, print_per_layer_stat=True,
-                              input_constructor=None):
+                    input_constructor=None):
     assert type(input_res) is tuple, 'Please provide the size of the input image.'
     assert len(input_res) >= 3, 'Input image should have 3 dimensions.'
     flops_model = add_flops_counting_methods(model)
@@ -44,6 +45,7 @@ def get_model_flops(model, input_res, print_per_layer_stat=True,
     flops_model.stop_flops_count()
 
     return flops_count
+
 
 def get_model_activation(model, input_res, input_constructor=None):
     assert type(input_res) is tuple, 'Please provide the size of the input image.'
@@ -91,21 +93,21 @@ def get_model_complexity_info(model, input_res, print_per_layer_stat=True, as_st
 
 def flops_to_string(flops, units='GMac', precision=2):
     if units is None:
-        if flops // 10**9 > 0:
-            return str(round(flops / 10.**9, precision)) + ' GMac'
-        elif flops // 10**6 > 0:
-            return str(round(flops / 10.**6, precision)) + ' MMac'
-        elif flops // 10**3 > 0:
-            return str(round(flops / 10.**3, precision)) + ' KMac'
+        if flops // 10 ** 9 > 0:
+            return str(round(flops / 10. ** 9, precision)) + ' GMac'
+        elif flops // 10 ** 6 > 0:
+            return str(round(flops / 10. ** 6, precision)) + ' MMac'
+        elif flops // 10 ** 3 > 0:
+            return str(round(flops / 10. ** 3, precision)) + ' KMac'
         else:
             return str(flops) + ' Mac'
     else:
         if units == 'GMac':
-            return str(round(flops / 10.**9, precision)) + ' ' + units
+            return str(round(flops / 10. ** 9, precision)) + ' ' + units
         elif units == 'MMac':
-            return str(round(flops / 10.**6, precision)) + ' ' + units
+            return str(round(flops / 10. ** 6, precision)) + ' ' + units
         elif units == 'KMac':
-            return str(round(flops / 10.**3, precision)) + ' ' + units
+            return str(round(flops / 10. ** 3, precision)) + ' ' + units
         else:
             return str(flops) + ' Mac'
 
@@ -427,6 +429,7 @@ def is_supported_instance_for_activation(module):
 
     return False
 
+
 def conv_activation_counter_hook(module, input, output):
     """
     Calculate the activations in the convolutional operation.
@@ -478,7 +481,3 @@ def dconv_flops_counter_hook(dconv_module, input, output):
 
     dconv_module.__flops__ += int(overall_flops)
     # dconv_module.__output_dims__ = output_dims
-
-
-
-

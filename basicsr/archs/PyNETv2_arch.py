@@ -219,7 +219,7 @@ class PyNETv2(nn.Module):
         self.conv_l1_out = ConvLayer(32, 4 * k * k, 1, 1, relu=True, instance_norm=False)
         self.suffle3 = nn.PixelShuffle(k)
 
-        self.conv_l0_out = ConvLayer(4, 3, 3, 1, relu=False, instance_norm=False)
+        self.conv_l0_out = ConvLayer(4, num_out_ch, 3, 1, relu=False, instance_norm=False)
 
     def level_3(self, conv_l3_d9):
         conv_l3_out = self.conv_l3_out(conv_l3_d9)

@@ -20,13 +20,10 @@ from basicsr.models import build_model
 from basicsr.utils import get_env_info, get_root_logger, get_time_str
 from basicsr.utils.options import dict2str
 
-import archs  # noqa
-import data  # noqa
-import models  # noqa
 from utils import parse_options, make_exp_dirs, get_model_flops, get_model_activation
 
 
-def analyse_pipeline(root_path, img_size: tuple = (3, 256, 256)):  # noqa
+def analyse_pipeline(root_path, img_size: tuple = (4, 224, 224)):  # noqa
     # parse options, set distributed setting, set random seed
     opt, _ = parse_options(root_path, is_train=False)
 
