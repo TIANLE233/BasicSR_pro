@@ -8,7 +8,6 @@ import cv2
 import imageio
 import numpy as np
 import torch
-from torchvision.utils import save_image
 from basicsr.archs import build_network
 from basicsr.losses import build_loss
 from basicsr.metrics import calculate_metric
@@ -19,13 +18,13 @@ from basicsr.utils.registry import MODEL_REGISTRY
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from tqdm import tqdm
 
-import archs.utils
-from .base_model import _BaseModel
+import basicsr.archs.utils
+from .base_model import BaseModel
 from .torch_optimizer import Lamb
 
 
 @MODEL_REGISTRY.register()
-class SIMModel(_BaseModel):
+class SIMModel(BaseModel):
     def __init__(self, opt) -> None:
         super(SIMModel, self).__init__(opt)
 
@@ -310,7 +309,7 @@ class SIMModel(_BaseModel):
         else:
             self.cri_psnr = None
 
-        
+
         # if self.cri_pix is None and self.cri_perceptual is None:
         #     raise ValueError('Both pixel and perceptual losses are None.')
 
@@ -618,7 +617,7 @@ class SIMModel(_BaseModel):
         return ave_time, gpu_mem
 
     def nondist_mad(self, dataloader, layer_type=None) -> list:
-        layer_type = archs.utils.SABase4D if layer_type is None else layer_type
+        layer_type = basicsr.archs.utils.SABase4D if layer_type is None else layer_type
 
         forward_hook = ForwardHook()
 

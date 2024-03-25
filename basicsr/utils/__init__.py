@@ -8,6 +8,7 @@ from .misc import check_resume, get_time_str, make_exp_dirs, mkdir_and_rename, s
 from .options import yaml_load, parse_options
 from .analyse_tool import get_model_flops, get_model_activation
 from .interpret_tool import get_model_interpretation
+from .timeandenergy_tool import gpu_energy_estimation, test_inference_time
 
 __all__ = [
     #  color_util.py

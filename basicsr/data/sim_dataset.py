@@ -12,7 +12,7 @@ import glob
 import os
 
 from .data_util import paired_paths_from_folder, paired_paths_from_lmdb, \
-    paired_paths_from_meta_info_file, paired_paths_from_folder_9
+    paired_paths_from_meta_info_file
 
 
 @DATASET_REGISTRY.register()
@@ -51,7 +51,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
                 self.opt['meta_info_file'] is not None:
             self.paths = paired_paths_from_meta_info_file([self.lq_folder, self.gt_folder], ['lq', 'gt'],
                                                           self.opt['meta_info_file'], self.filename_tmpl)
-        
+
         else:
             self.paths = paired_paths_from_folder_9([self.lq_folder, self.gt_folder], ['lq', 'gt'], self.filename_tmpl)
 
@@ -69,7 +69,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
             img_gt = np.expand_dims(img_gt, axis=2)
             # img_gt = self.prctile_norm(img_gt.astype(np.float32))
             img_gt = img_gt.astype(np.float32) / 65535
-          
+
             lq_path = self.paths[index]['lq_path']
             img_lq = self.nine2one(lq_path)
             # img_lq = np.asarray(img_lq)
@@ -172,7 +172,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
         # Combine channels into an RGB image
         RAW_combined = np.dstack((ch_B, ch_Gb, ch_R, ch_Gr))
         return RAW_combined
-    
+
     @staticmethod
     def nine2one(lq_path):
         # def load_image(image_path):
@@ -181,7 +181,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
         #     return np.array(image)
         img_path = glob.glob(os.path.join(lq_path, '*.tif'))
         img_path.sort()
-        cur_img = [] 
+        cur_img = []
         for cur in img_path:
         # image_paths = [os.path.join(lq_path, f) for f in os.listdir(lq_path) if f.endswith('.tif')]
         # from concurrent.futures import ThreadPoolExecutor
@@ -195,7 +195,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
             cur_img.append(img)
         nine2one = np.dstack(cur_img)
         return nine2one
-    
+
     @staticmethod
     def imfrombytes(content, flag='color', float32=False, dtype=np.uint8):
         """Read an image from bytes.
@@ -217,7 +217,7 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
         if float32:
             img = img.astype(np.float32) / 255.
         return img
-    
+
     @staticmethod
     def prctile_norm(x, min_prc=0, max_prc=100):
         y = (x-np.percentile(x, min_prc))/(np.percentile(x, max_prc)-np.percentile(x, min_prc)+1e-7)
