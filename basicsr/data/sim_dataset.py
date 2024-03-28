@@ -110,46 +110,15 @@ class SIMDataset(data.Dataset):  # 暂停bit0的使用
                 normalize(img_gt, self.mean, self.std, inplace=True)
 
         else:
-            # Load gt and lq images.
-            gt_path = self.paths[index]['gt_path']
-            img_gt = np.asarray(imageio.imread(gt_path))
-            img_gt = img_gt.astype(np.float32)
-
-            lq_path = self.paths[index]['lq_path']
-            img_lq = np.asarray(imageio.imread(lq_path))
-            img_lq = self.extract_bayer_channels(img_lq)
-            img_lq = img_lq.astype(np.float32)
-
-            # augmentation for training
-            if self.opt['phase'] == 'train':
-                gt_size = self.opt['gt_size']
-                # random crop
-                if type(gt_size) == int:
-                    img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
-                elif gt_size is None:
-                    pass
-                else:
-                    raise NotImplementedError(f'gt_size {gt_size} is not supported yet.')
-
-                # flip, rotation
-                img_gt, img_lq = augment([img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
-
-            # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
-            # TODO: It is better to update the datasets, rather than force to crop
-            if self.opt['phase'] != 'train':
-                img_gt = img_gt[0:img_lq.shape[0] * scale, 0:img_lq.shape[1] * scale, :]
-
-            # BGR to RGB, HWC to CHW, numpy to tensor
-            # img_gt, img_lq = img2tensor([img_gt, img_lq], bgr2rgb=True, float32=True)
-            img_gt, img_lq = self.np2tensor([img_gt, img_lq])
+            pass
 
         # Used in CKA and MAD to keep all inputs with the same shape
-        if self.input_size is not None:
-            # Cropping from the top right corner
-            img_lq = img_lq[:, :self.input_size, :self.input_size]
-            img_gt = img_gt[:, :self.input_size * scale, :self.input_size * scale]
-
-        return {'lq': img_lq, 'gt': img_gt, 'lq_path': lq_path, 'gt_path': gt_path}
+        # if self.input_size is not None:
+        #     # Cropping from the top right corner
+        #     img_lq = img_lq[:, :self.input_size, :self.input_size]
+        #     img_gt = img_gt[:, :self.input_size * scale, :self.input_size * scale]
+        #
+        # return {'lq': img_lq, 'gt': img_gt, 'lq_path': lq_path, 'gt_path': gt_path}
 
     def __len__(self) -> int:
         return len(self.paths)
