@@ -12,7 +12,7 @@ import glob
 import os
 
 from .data_util import paired_paths_from_folder, paired_paths_from_lmdb, \
-    paired_paths_from_meta_info_file
+    paired_paths_from_meta_info_file, paired_paths_from_folder_9
 
 
 @DATASET_REGISTRY.register()
