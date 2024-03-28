@@ -1,11 +1,12 @@
+from os import path as osp
+
 import cv2
 import numpy as np
 import torch
-from os import path as osp
-from torch.nn import functional as F
-
 from basicsr.data.transforms import mod_crop
 from basicsr.utils import img2tensor, scandir
+from torch.nn import functional as f
+import os
 
 
 def read_img_seq(path, require_mod_crop=False, scale=1, return_imgname=False):
@@ -92,7 +93,7 @@ def generate_frame_indices(crt_idx, max_frame_num, num_frames, padding='reflecti
     return indices
 
 
-def paired_paths_from_lmdb(folders, keys):
+def paired_paths_from_lmdb(folders, keys, meta_info_file=None):
     """Generate paired paths from lmdb files.
 
     Contents of lmdb. Taking the `lq.lmdb` for example, the file structure is:
@@ -125,6 +126,7 @@ def paired_paths_from_lmdb(folders, keys):
         keys (list[str]): A list of keys identifying folders. The order should
             be in consistent with folders, e.g., ['lq', 'gt'].
             Note that this key is different from lmdb keys.
+        meta_info_file (str): Path to the meta information file.
 
     Returns:
         list[str]: Returned path list.
@@ -139,18 +141,15 @@ def paired_paths_from_lmdb(folders, keys):
         raise ValueError(f'{input_key} folder and {gt_key} folder should both in lmdb '
                          f'formats. But received {input_key}: {input_folder}; '
                          f'{gt_key}: {gt_folder}')
-    # ensure that the two meta_info files are the same
-    with open(osp.join(input_folder, 'meta_info.txt')) as fin:
+
+    meta_info_file = meta_info_file or osp.join(input_folder, 'meta_info.txt')
+    with open(meta_info_file) as fin:
         input_lmdb_keys = [line.split('.')[0] for line in fin]
-    with open(osp.join(gt_folder, 'meta_info.txt')) as fin:
-        gt_lmdb_keys = [line.split('.')[0] for line in fin]
-    if set(input_lmdb_keys) != set(gt_lmdb_keys):
-        raise ValueError(f'Keys in {input_key}_folder and {gt_key}_folder are different.')
-    else:
-        paths = []
-        for lmdb_key in sorted(input_lmdb_keys):
-            paths.append(dict([(f'{input_key}_path', lmdb_key), (f'{gt_key}_path', lmdb_key)]))
-        return paths
+
+    paths = []
+    for lmdb_key in sorted(input_lmdb_keys):
+        paths.append(dict([(f'{input_key}_path', lmdb_key), (f'{gt_key}_path', lmdb_key)]))
+    return paths
 
 
 def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmpl):
@@ -225,12 +224,58 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     paths = []
     for gt_path in gt_paths:
         basename, ext = osp.splitext(osp.basename(gt_path))
+
+        ext = '.png'
+
         input_name = f'{filename_tmpl.format(basename)}{ext}'
+
         input_path = osp.join(input_folder, input_name)
         assert input_name in input_paths, f'{input_name} is not in {input_key}_paths.'
         gt_path = osp.join(gt_folder, gt_path)
         paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
     return paths
+
+def paired_paths_from_folder_9(folders, keys, filename_tmpl):
+    """Generate paired paths from folders.
+
+    Args:
+        folders (list[str]): A list of folder path. The order of list should
+            be [input_folder, gt_folder].
+        keys (list[str]): A list of keys identifying folders. The order should
+            be in consistent with folders, e.g., ['lq', 'gt'].
+        filename_tmpl (str): Template for each filename. Note that the
+            template excludes the file extension. Usually the filename_tmpl is
+            for files in the input folder.
+
+    Returns:
+        list[str]: Returned path list.
+    """
+    assert len(folders) == 2, ('The len of folders should be 2 with [input_folder, gt_folder]. '
+                               f'But got {len(folders)}')
+    assert len(keys) == 2, f'The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}'
+    input_folder, gt_folder = folders
+    input_key, gt_key = keys
+
+    input_paths = [d.name for d in os.scandir(input_folder) if d.is_dir()]
+    gt_paths = list(scandir(gt_folder))
+    assert len(input_paths) == len(gt_paths), (f'{input_key} and {gt_key} datasets have different number of images: '
+                                               f'{len(input_paths)}, {len(gt_paths)}.')
+    paths = []
+    for gt_path in gt_paths:
+        basename, ext = osp.splitext(osp.basename(gt_path))
+
+        input_name = f'{filename_tmpl.format(basename)}'
+
+        input_path = osp.join(input_folder, input_name)
+
+        assert input_name in input_paths, f'{input_name} is not in {input_key}_paths.'
+
+        gt_path = osp.join(gt_folder, gt_path)
+
+        paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
+    return paths
+
+
 
 
 def paths_from_folder(folder):
@@ -303,11 +348,11 @@ def duf_downsample(x, kernel_size=13, scale=4):
     b, t, c, h, w = x.size()
     x = x.view(-1, 1, h, w)
     pad_w, pad_h = kernel_size // 2 + scale * 2, kernel_size // 2 + scale * 2
-    x = F.pad(x, (pad_w, pad_w, pad_h, pad_h), 'reflect')
+    x = f.pad(x, (pad_w, pad_w, pad_h, pad_h), 'reflect')
 
     gaussian_filter = generate_gaussian_kernel(kernel_size, 0.4 * scale)
     gaussian_filter = torch.from_numpy(gaussian_filter).type_as(x).unsqueeze(0).unsqueeze(0)
-    x = F.conv2d(x, gaussian_filter, stride=scale)
+    x = f.conv2d(x, gaussian_filter, stride=scale)
     x = x[:, :, 2:-2, 2:-2]
     x = x.view(b, t, c, x.size(2), x.size(3))
     if squeeze_flag:
